@@ -18,6 +18,14 @@
     "lib": [
       "es2018",
       "dom"
-    ]
+    ],
+    "paths": {
+      "@rengular/http": [
+        "dist/rengular/http"
+      ],
+      "@rengular/http/*": [
+        "dist/rengular/http/*"
+      ]
+    }
   }
 }
