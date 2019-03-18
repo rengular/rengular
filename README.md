@@ -1,2 +1,5 @@
-# rengular
-Angular reusable components/services/modules.
+#Rengular
+
+---
+Reusable angular modules.
+
