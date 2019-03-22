@@ -1,7 +1,6 @@
 import { FactoryProvider, inject, Inject, Injectable, InjectionToken, ValueProvider } from '@angular/core';
 import { HttpClient, HttpHandler, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TargetLocator } from 'selenium-webdriver';
 
 export interface IRequestOptions {
   headers?: HttpHeaders;
@@ -13,12 +12,14 @@ export interface IRequestOptions {
   body?: object | string | number | boolean;
 }
 
+export const SERVER_LOCATION = new InjectionToken<string>('Rengular.http.SERVER_LOCATION');
+
 @Injectable({
   providedIn: 'root',
 })
 export class HttpService extends HttpClient {
 
-  constructor( private httpHandler: HttpHandler, @Inject('') private targetLocation: string ) {
+  constructor( private httpHandler: HttpHandler, @Inject(SERVER_LOCATION) private targetLocation: string ) {
     super(httpHandler);
   }
 
@@ -66,17 +67,16 @@ export class HttpService extends HttpClient {
 }
 
 export default function httpServiceProvider( targetLocation: string ) {
-  const TargetLocation: InjectionToken<string> = new InjectionToken<string>('TargetLocation');
   return [
     {
-      provide: TargetLocation,
+      provide: SERVER_LOCATION,
       useValue: targetLocation
     } as ValueProvider,
     {
       provide: HttpService,
       useFactory: ( httpHandler: HttpHandler ) => {
-        return new HttpService(httpHandler, inject(TargetLocation));
+        return new HttpService(httpHandler, inject(SERVER_LOCATION));
       },
-      deps: [ HttpHandler, TargetLocation ]
+      deps: [ HttpHandler, SERVER_LOCATION ]
     } as FactoryProvider ];
 }
