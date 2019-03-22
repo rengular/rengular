@@ -1,24 +1,57 @@
-# Http
+# Angular HTTP library
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.2.0.
+## How to install
 
-## Code scaffolding
+```npm i @rengular/http --save```
 
-Run `ng generate component component-name --project http` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project http`.
-> Note: Don't forget to add `--project http` or else it will be added to the default project in your `angular.json` file. 
+## How to use
 
-## Build
+  1. Import the Rengular http module into the root module file of your application.
 
-Run `ng build http` to build the project. The build artifacts will be stored in the `dist/` directory.
+          import { RengHttpModule } from '@rengular/http';
 
-## Publishing
+ 2. Provide the module into the `NgModule` imports array.
 
-After building your library with `ng build http`, go to the dist folder `cd dist/http` and run `npm publish`.
+        RengHttpModule.forRoot('http://example.com/'),
+        
+      * Make sure to change the string URL in the `forRoot`
 
-## Running unit tests
+ 3. Import Rengular Http service where you want to do a call 
 
-Run `ng test http` to execute the unit tests via [Karma](https://karma-runner.github.io).
+        import { HttpService } from '@rengular/http';
 
-## Further help
+   Example:
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+        import { Component } from '@angular/core';
+        import { HttpService } from '@rengular/http';
+        
+        export class AppComponent {
+        
+          constructor( private http: HttpService ) {
+          }
+        
+          ngOnInit() {
+            this.http.Post('api/auth/login', null).subscribe((token) => {
+              console.log('The authentication is OK!', token);
+            }, () => {
+              console.log('The authentication failed!');
+            });
+          }
+        
+        }
+
+  *  If you want to get the server location provided in the beginning
+  
+   Import:
+   
+   ``` import { SERVER_LOCATION } from '@rengular/http';```
+  
+   and define in your component/service/directive constructor:
+  
+    @Inject(SERVER_LOCATION) SERVER_LOCATION: string;
+
+### Documentation
+
+TBD
+
+If you use WebStorm or VS Code I am pretty sure the editor will show you documentation about what methods the `HttpService` has and what each of the parameters on the used method represents on the fly.
