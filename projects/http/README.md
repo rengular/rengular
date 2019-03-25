@@ -1,4 +1,16 @@
 # Angular HTTP library
+An Angular HTTP library that extends the `HttpClient`.
+
+## What the library provides
+
+* Requests that are executed against provided default server location
+* Default server location injector token
+
+** Because the library is built on top of `HttpClient` - all `HttpClient` functionality can be used as well.
+
+## Future features
+
+* DELETE request with a confirmation to execute the request
 
 ## How to install
 
