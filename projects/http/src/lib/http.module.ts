@@ -1,6 +1,6 @@
-import { HttpClientModule, HttpHandler } from '@angular/common/http';
-import { FactoryProvider, InjectionToken, NgModule, ValueProvider } from '@angular/core';
-import httpServiceProvider, { HttpService } from './http.service';
+import { HttpClientModule } from '@angular/common/http';
+import { NgModule } from '@angular/core';
+import httpServiceProvider from './http.service';
 
 @NgModule({
   imports: [
