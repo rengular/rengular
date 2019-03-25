@@ -1,6 +1,7 @@
-import { FactoryProvider, inject, Inject, Injectable, InjectionToken, ValueProvider } from '@angular/core';
+import { FactoryProvider, inject, Injectable, InjectionToken, ValueProvider } from '@angular/core';
 import { HttpClient, HttpHandler, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 export interface IRequestOptions {
   headers?: HttpHeaders;
@@ -19,14 +20,14 @@ export const SERVER_LOCATION = new InjectionToken<string>('Rengular.http.SERVER_
 })
 export class HttpService extends HttpClient {
 
-  constructor( private httpHandler: HttpHandler, @Inject(SERVER_LOCATION) private targetLocation: string ) {
+  constructor( private httpHandler: HttpHandler, private targetLocation: string ) {
     super(httpHandler);
   }
 
   /**
    * GET request
-   * @param endPoint it doesn't need / in front of the end point
-   * @param options options of the request like headers, body, etc.
+   * @param endPoint of the api
+   * @param options of the request like headers, body, etc.
    * @param api use if there is needed to send request to different back-end than the default one.
    */
   public Get<T>( endPoint: string, options?: IRequestOptions, api?: string ): Observable<T> {
@@ -35,9 +36,9 @@ export class HttpService extends HttpClient {
 
   /**
    * POST request
-   * @param endPoint end point of the api
+   * @param endPoint of the api
    * @param params body of the request.
-   * @param options options of the request like headers, body, etc.
+   * @param options of the request like headers, body, etc.
    * @param api use if there is needed to send request to different back-end than the default one.
    */
   public Post<T>( endPoint: string, params: object | string, options?: IRequestOptions, api?: string ): Observable<T> {
@@ -46,9 +47,9 @@ export class HttpService extends HttpClient {
 
   /**
    * PUT request
-   * @param endPoint end point of the api
+   * @param endPoint of the api
    * @param params body of the request.
-   * @param options options of the request like headers, body, etc.
+   * @param options of the request like headers, body, etc.
    * @param api use if there is needed to send request to different back-end than the default one.
    */
   public Put<T>( endPoint: string, params: object | string, options?: IRequestOptions, api?: string ): Observable<T> {
@@ -58,11 +59,35 @@ export class HttpService extends HttpClient {
   /**
    * DELETE request
    * @param endPoint end point of the api
-   * @param options options of the request like headers, body, etc.
+   * @param options of the request like headers, body, etc.
    * @param api use if there is needed to send request to different back-end than the default one.
    */
   public Delete<T>( endPoint: string, options?: IRequestOptions, api?: string ): Observable<T> {
     return super.delete<T>(api || this.targetLocation + endPoint, options);
+  }
+
+  /**
+   *
+   * @param confirmation window(component) that returns boolean on close.
+   * @param endPoint end point of the api for removing item.
+   * @param options of the request like headers, body, etc.
+   * @param api use if there is needed to send request to different back-end than the default one.
+   *
+   * @returns Delete<T>(endpoint, options?, api?) request if user approved the action OR empty Observable if user declined the action.
+   */
+  public ConfirmDelete<T, U extends { afterClosed: Observable<boolean> }>(confirmation: U,
+                                                                          endPoint: string,
+                                                                          options?: IRequestOptions,
+                                                                          api?: string ): Observable<T> {
+
+    return confirmation.afterClosed.pipe(switchMap((value: boolean): Observable<T> => {
+     if (!value) {
+       // Nothing happens if user clicked cancel.
+       return new Observable<T>();
+     }
+
+     return this.Delete<T>(endPoint, options, api);
+   }));
   }
 }
 
