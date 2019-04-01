@@ -18,6 +18,10 @@ An Angular HTTP library that extends the `HttpClient`.
 
 ## How to use
 
+  https://stackblitz.com/edit/rengular-http-usage
+
+  OR
+
   1. Import the Rengular http module into the root module file of your application.
 
           import { RengHttpModule } from '@rengular/http';
