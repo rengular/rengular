@@ -1,13 +1,15 @@
 {
   "name": "rengular",
-  "version": "0.0.0",
+  "description": "Reusable angular modules",
+  "license": "MIT",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    
+    "start": "npm run start:playground",
+    "start:playground": "ng serve --project playground",
+
     "build": "ng build",
-    "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e"
+    "build:http": "ng build --project http"
   },
   "dependencies": {
     "@angular/animations": "~7.2.0",
