@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "cli": {
+    "analytics": false
+  },
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
@@ -10,7 +13,7 @@
       "prefix": "reng",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-ng-packagr:build",
+          "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
             "tsConfig": "projects/http/tsconfig.lib.json",
             "project": "projects/http/ng-package.json"
@@ -31,9 +34,7 @@
               "projects/http/tsconfig.lib.json",
               "projects/http/tsconfig.spec.json"
             ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
+            "exclude": ["**/node_modules/**"]
           }
         }
       }
@@ -57,11 +58,8 @@
               "projects/playground/src/favicon.ico",
               "projects/playground/src/assets"
             ],
-            "styles": [
-              "projects/playground/src/styles.css"
-            ],
-            "scripts": [],
-            "es5BrowserSupport": true
+            "styles": ["projects/playground/src/styles.css"],
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -74,7 +72,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -114,9 +111,7 @@
             "polyfills": "projects/playground/src/polyfills.ts",
             "tsConfig": "projects/playground/tsconfig.spec.json",
             "karmaConfig": "projects/playground/karma.conf.js",
-            "styles": [
-              "projects/playground/src/styles.css"
-            ],
+            "styles": ["projects/playground/src/styles.css"],
             "scripts": [],
             "assets": [
               "projects/playground/src/favicon.ico",
@@ -131,9 +126,7 @@
               "projects/playground/tsconfig.app.json",
               "projects/playground/tsconfig.spec.json"
             ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
+            "exclude": ["**/node_modules/**"]
           }
         }
       }
@@ -159,9 +152,7 @@
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
             "tsConfig": "projects/playground-e2e/tsconfig.e2e.json",
-            "exclude": [
-              "**/node_modules/**"
-            ]
+            "exclude": ["**/node_modules/**"]
           }
         }
       }

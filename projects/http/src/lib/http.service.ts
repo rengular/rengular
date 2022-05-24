@@ -1,25 +1,42 @@
-import { FactoryProvider, inject, Inject, Injectable, InjectionToken, ValueProvider } from '@angular/core';
-import { HttpClient, HttpHandler, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {
+  FactoryProvider,
+  inject,
+  Inject,
+  Injectable,
+  InjectionToken,
+  Provider,
+  ValueProvider,
+} from "@angular/core";
+import {
+  HttpClient,
+  HttpHandler,
+  HttpHeaders,
+  HttpParams,
+} from "@angular/common/http";
+import { Observable } from "rxjs";
 
 export interface IRequestOptions {
   headers?: HttpHeaders;
-  observe?: 'body';
+  observe?: "body";
   params?: HttpParams;
   reportProgress?: boolean;
-  responseType?: 'json';
+  responseType?: "json";
   withCredentials?: boolean;
   body?: object | string | number | boolean;
 }
 
-export const SERVER_LOCATION = new InjectionToken<string>('Rengular.http.SERVER_LOCATION');
+export const SERVER_LOCATION = new InjectionToken<string>(
+  "Rengular.http.SERVER_LOCATION"
+);
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: "root",
 })
 export class HttpService extends HttpClient {
-
-  constructor( private httpHandler: HttpHandler, @Inject(SERVER_LOCATION) private targetLocation: string ) {
+  constructor(
+    httpHandler: HttpHandler,
+    @Inject(SERVER_LOCATION) private targetLocation: string
+  ) {
     super(httpHandler);
   }
 
@@ -29,7 +46,11 @@ export class HttpService extends HttpClient {
    * @param options options of the request like headers, body, etc.
    * @param api use if there is needed to send request to different back-end than the default one.
    */
-  public Get<T>( endPoint: string, options?: IRequestOptions, api?: string ): Observable<T> {
+  public Get<T>(
+    endPoint: string,
+    options?: IRequestOptions,
+    api?: string
+  ): Observable<T> {
     return super.get<T>(api || this.targetLocation + endPoint, options);
   }
 
@@ -40,8 +61,17 @@ export class HttpService extends HttpClient {
    * @param options options of the request like headers, body, etc.
    * @param api use if there is needed to send request to different back-end than the default one.
    */
-  public Post<T>( endPoint: string, params: object | string, options?: IRequestOptions, api?: string ): Observable<T> {
-    return super.post<T>(api || this.targetLocation + endPoint, params, options);
+  public Post<T>(
+    endPoint: string,
+    params: object | string,
+    options?: IRequestOptions,
+    api?: string
+  ): Observable<T> {
+    return super.post<T>(
+      api || this.targetLocation + endPoint,
+      params,
+      options
+    );
   }
 
   /**
@@ -51,7 +81,12 @@ export class HttpService extends HttpClient {
    * @param options options of the request like headers, body, etc.
    * @param api use if there is needed to send request to different back-end than the default one.
    */
-  public Put<T>( endPoint: string, params: object | string, options?: IRequestOptions, api?: string ): Observable<T> {
+  public Put<T>(
+    endPoint: string,
+    params: object | string,
+    options?: IRequestOptions,
+    api?: string
+  ): Observable<T> {
     return super.put<T>(api || this.targetLocation + endPoint, params, options);
   }
 
@@ -61,22 +96,29 @@ export class HttpService extends HttpClient {
    * @param options options of the request like headers, body, etc.
    * @param api use if there is needed to send request to different back-end than the default one.
    */
-  public Delete<T>( endPoint: string, options?: IRequestOptions, api?: string ): Observable<T> {
+  public Delete<T>(
+    endPoint: string,
+    options?: IRequestOptions,
+    api?: string
+  ): Observable<T> {
     return super.delete<T>(api || this.targetLocation + endPoint, options);
   }
 }
 
-export default function httpServiceProvider( targetLocation: string ) {
+export default function httpServiceProvider(
+  targetLocation: string
+): Provider[] {
   return [
     {
       provide: SERVER_LOCATION,
-      useValue: targetLocation
+      useValue: targetLocation,
     } as ValueProvider,
     {
       provide: HttpService,
-      useFactory: ( httpHandler: HttpHandler ) => {
+      useFactory: (httpHandler: HttpHandler) => {
         return new HttpService(httpHandler, inject(SERVER_LOCATION));
       },
-      deps: [ HttpHandler, SERVER_LOCATION ]
-    } as FactoryProvider ];
+      deps: [HttpHandler, SERVER_LOCATION],
+    } as FactoryProvider,
+  ];
 }
