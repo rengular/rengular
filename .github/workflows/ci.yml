@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a branch / PR).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    name: Test & build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The playground resolves @rengular/http from dist (tsconfig paths),
+      # so the library must be built before the playground is tested/built.
+      - name: Build @rengular/http
+        run: npx ng build http --configuration production
+
+      - name: Test @rengular/http
+        run: npx ng test http --watch=false
+
+      - name: Test playground
+        run: npx ng test playground --watch=false
+
+      - name: Build playground
+        run: npx ng build playground
