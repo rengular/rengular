@@ -1,19 +1,16 @@
-import {
-  FactoryProvider,
-  inject,
-  Inject,
-  Injectable,
-  InjectionToken,
-  Provider,
-  ValueProvider,
-} from "@angular/core";
+import { inject, Injectable, InjectionToken, Injector } from "@angular/core";
 import {
   HttpClient,
   HttpHandler,
   HttpHeaders,
   HttpParams,
+  httpResource,
+  HttpResourceOptions,
+  HttpResourceRef,
 } from "@angular/common/http";
 import { Observable } from "rxjs";
+
+import { buildResourceUrlFactory, RengEndpoint } from "./url";
 
 export interface IRequestOptions {
   headers?: HttpHeaders;
@@ -33,19 +30,13 @@ export const SERVER_LOCATION = new InjectionToken<string>(
   providedIn: "root",
 })
 export class HttpService extends HttpClient {
-  constructor(
-    httpHandler: HttpHandler,
-    @Inject(SERVER_LOCATION) private targetLocation: string
-  ) {
-    super(httpHandler);
+  private readonly targetLocation = inject(SERVER_LOCATION);
+  private readonly injector = inject(Injector);
+
+  constructor() {
+    super(inject(HttpHandler));
   }
 
-  /**
-   * GET request
-   * @param endPoint it doesn't need / in front of the end point
-   * @param options options of the request like headers, body, etc.
-   * @param api use if there is needed to send request to different back-end than the default one.
-   */
   public Get<T>(
     endPoint: string,
     options?: IRequestOptions,
@@ -54,13 +45,6 @@ export class HttpService extends HttpClient {
     return super.get<T>(api || this.targetLocation + endPoint, options);
   }
 
-  /**
-   * POST request
-   * @param endPoint end point of the api
-   * @param params body of the request.
-   * @param options options of the request like headers, body, etc.
-   * @param api use if there is needed to send request to different back-end than the default one.
-   */
   public Post<T>(
     endPoint: string,
     params: object | string,
@@ -74,13 +58,6 @@ export class HttpService extends HttpClient {
     );
   }
 
-  /**
-   * PUT request
-   * @param endPoint end point of the api
-   * @param params body of the request.
-   * @param options options of the request like headers, body, etc.
-   * @param api use if there is needed to send request to different back-end than the default one.
-   */
   public Put<T>(
     endPoint: string,
     params: object | string,
@@ -90,12 +67,6 @@ export class HttpService extends HttpClient {
     return super.put<T>(api || this.targetLocation + endPoint, params, options);
   }
 
-  /**
-   * DELETE request
-   * @param endPoint end point of the api
-   * @param options options of the request like headers, body, etc.
-   * @param api use if there is needed to send request to different back-end than the default one.
-   */
   public Delete<T>(
     endPoint: string,
     options?: IRequestOptions,
@@ -103,22 +74,33 @@ export class HttpService extends HttpClient {
   ): Observable<T> {
     return super.delete<T>(api || this.targetLocation + endPoint, options);
   }
-}
 
-export default function httpServiceProvider(
-  targetLocation: string
-): Provider[] {
-  return [
-    {
-      provide: SERVER_LOCATION,
-      useValue: targetLocation,
-    } as ValueProvider,
-    {
-      provide: HttpService,
-      useFactory: (httpHandler: HttpHandler) => {
-        return new HttpService(httpHandler, inject(SERVER_LOCATION));
-      },
-      deps: [HttpHandler, SERVER_LOCATION],
-    } as FactoryProvider,
-  ];
+  public Patch<T>(
+    endPoint: string,
+    params: object | string,
+    options?: IRequestOptions,
+    api?: string
+  ): Observable<T> {
+    return super.patch<T>(
+      api || this.targetLocation + endPoint,
+      params,
+      options
+    );
+  }
+
+  /**
+   * Create a base-URL-aware `httpResource` bound to the configured server
+   * location. Unlike the free `rengHttpResource`, this may be called outside an
+   * injection context because it reuses the service's own injector.
+   *
+   * @param endPoint endpoint relative to the server location, or a reactive function returning one.
+   * @param options the standard `httpResource` options (`parse`, `defaultValue`, …).
+   */
+  public resource<TResult = unknown>(
+    endPoint: RengEndpoint,
+    options?: HttpResourceOptions<TResult, unknown>
+  ): HttpResourceRef<TResult | undefined> {
+    const url = buildResourceUrlFactory(this.targetLocation, endPoint);
+    return httpResource<TResult>(url, { injector: this.injector, ...options });
+  }
 }

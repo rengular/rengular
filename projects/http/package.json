@@ -1,6 +1,6 @@
 {
   "name": "@rengular/http",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -10,10 +10,13 @@
     "angular",
     "library",
     "http",
-    "HttpClient"
+    "HttpClient",
+    "httpResource",
+    "signals",
+    "zoneless"
   ],
   "peerDependencies": {
-    "@angular/common": "^13.3.0",
-    "@angular/core": "^13.3.0"
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0"
   }
 }

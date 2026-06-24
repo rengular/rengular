@@ -1,15 +1,20 @@
-import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import httpServiceProvider from "./http.service";
 
-@NgModule({
-  imports: [HttpClientModule],
-})
+import { provideRengHttp } from "./http.providers";
+
+/**
+ * Backward-compatible NgModule entry point. New, standalone applications should
+ * prefer {@link provideRengHttp} directly; `RengHttpModule.forRoot` is kept so
+ * existing v1 consumers keep working on Angular 22.
+ */
+@NgModule({})
 export class RengHttpModule {
-  static forRoot(targetLocation: string): ModuleWithProviders<RengHttpModule> {
+  static forRoot(
+    targetLocation: string
+  ): ModuleWithProviders<RengHttpModule> {
     return {
       ngModule: RengHttpModule,
-      providers: [...httpServiceProvider(targetLocation)],
+      providers: [provideRengHttp(targetLocation)],
     };
   }
 }
