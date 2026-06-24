@@ -1,5 +1,5 @@
 import { TestBed } from "@angular/core/testing";
-import { provideHttpClient } from "@angular/common/http";
+import { HttpHeaders, provideHttpClient } from "@angular/common/http";
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -88,6 +88,49 @@ describe("HttpService", () => {
 
     const req = httpMock.expectOne("https://other.test/v2/users/1");
     expect(req.request.method).toBe("PATCH");
+    req.flush({});
+  });
+
+  it("forwards custom headers on Get requests", () => {
+    const headers = new HttpHeaders()
+      .set("Authorization", "Bearer token")
+      .set("X-Trace-Id", "abc-123");
+
+    service.Get("users", { headers }).subscribe();
+
+    const req = httpMock.expectOne("http://api.test/users");
+    expect(req.request.headers.get("Authorization")).toBe("Bearer token");
+    expect(req.request.headers.get("X-Trace-Id")).toBe("abc-123");
+    req.flush([]);
+  });
+
+  it("forwards custom headers on Post requests", () => {
+    const headers = new HttpHeaders().set("Authorization", "Bearer token");
+
+    service.Post("users", { name: "ada" }, { headers }).subscribe();
+
+    const req = httpMock.expectOne("http://api.test/users");
+    expect(req.request.headers.get("Authorization")).toBe("Bearer token");
+    req.flush({});
+  });
+
+  it("forwards custom headers on Patch requests", () => {
+    const headers = new HttpHeaders().set("Authorization", "Bearer token");
+
+    service.Patch("users/1", { name: "ada" }, { headers }).subscribe();
+
+    const req = httpMock.expectOne("http://api.test/users/1");
+    expect(req.request.headers.get("Authorization")).toBe("Bearer token");
+    req.flush({});
+  });
+
+  it("forwards custom headers on Delete requests", () => {
+    const headers = new HttpHeaders().set("Authorization", "Bearer token");
+
+    service.Delete("users/1", { headers }).subscribe();
+
+    const req = httpMock.expectOne("http://api.test/users/1");
+    expect(req.request.headers.get("Authorization")).toBe("Bearer token");
     req.flush({});
   });
 
