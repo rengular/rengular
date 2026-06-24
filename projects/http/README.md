@@ -1,39 +1,57 @@
-# Angular HTTP library
+# @rengular/http
 
-An Angular HTTP library that extends `HttpClient` with a configured default
-server location, convenience request methods, and a base-URL-aware wrapper around
-the signal-based [`httpResource`](https://angular.dev/guide/http/http-resource).
-Supports **Angular 19.2 → 22**.
+[![npm version](https://img.shields.io/npm/v/@rengular/http.svg)](https://www.npmjs.com/package/@rengular/http)
+[![Angular](https://img.shields.io/badge/Angular-19.2%20–%2022-dd0031.svg)](https://angular.dev)
+[![license](https://img.shields.io/npm/l/@rengular/http.svg)](../../LICENSE)
 
-## What the library provides
+A thin, type-safe layer over Angular's `HttpClient` that gives you a **configured
+base URL**, ergonomic request helpers, and a base-URL-aware wrapper around the
+signal-based [`httpResource`](https://angular.dev/guide/http/http-resource).
 
-- Requests executed against a provided **default server location** (base URL).
-- `HttpService.Get/Post/Put/Delete/Patch` convenience methods (prepend the base URL,
-  accept an absolute `api` override).
-- `rengHttpResource()` / `HttpService.resource()` — reactive, signal-based HTTP via
-  Angular's `httpResource`, with the base URL applied automatically.
-- The `SERVER_LOCATION` injection token.
-- Fully standalone- and **zoneless**-ready.
+Stop repeating `environment.apiUrl + '/users'` in every call — configure the server
+location once and request relative endpoints everywhere.
 
-Because the library is built on top of `HttpClient`, all `HttpClient` functionality
-(interceptors, testing, etc.) is available as well.
+```ts
+// before
+this.http.get(`${environment.apiUrl}/users/${id}`);
 
-## Requirements
-
-- Angular `19.2`, `20`, `21`, or `22` (`@angular/core`, `@angular/common`).
-- `httpResource` (and the `rengHttpResource` / `HttpService.resource` APIs) requires
-  Angular **≥ 19.2**, where it shipped experimentally; it is stable from Angular 22.
-  The imperative `HttpService` methods work on the whole range.
-
-## How to install
-
-```bash
-npm i @rengular/http --save
+// after
+this.http.Get(`users/${id}`);
+// or, reactively:
+users = rengHttpResource<User[]>(() => `users?page=${this.page()}`);
 ```
 
-## Setup (standalone)
+## Features
 
-Provide Angular's `HttpClient` and Rengular's HTTP support in your application config:
+- 🌐 **Default server location** — set the base URL once via `provideRengHttp(url)`.
+- ✋ **Imperative helpers** — `Get` / `Post` / `Put` / `Delete` / `Patch`, each with an
+  absolute-URL `api` override for one-off calls to a different backend.
+- ⚡ **Reactive resources** — `rengHttpResource()` / `HttpService.resource()` return
+  signal-based `HttpResourceRef`s that auto-refetch when their dependencies change.
+- 🧩 **Standalone-first** — `provideRengHttp()`, with `RengHttpModule.forRoot()` kept
+  for backward compatibility.
+- 🪶 **Zoneless-ready** — built entirely on signals and `HttpClient`; no Zone.js needed.
+- 🧱 **Still just `HttpClient`** — `HttpService extends HttpClient`, so interceptors,
+  testing utilities, and every other `HttpClient` feature keep working.
+
+## Compatibility
+
+| Angular | `HttpService` (Get/Post/Put/Delete/Patch) | `rengHttpResource` / `HttpService.resource` |
+| ------- | :---------------------------------------: | :-----------------------------------------: |
+| 19.2 – 21 | ✅ | ✅ (`httpResource` is experimental in this range) |
+| 22      | ✅ | ✅ (`httpResource` is stable) |
+
+`httpResource` shipped in Angular **19.2**, so the resource APIs require `≥ 19.2`.
+
+## Install
+
+```bash
+npm i @rengular/http
+```
+
+## Setup
+
+Provide Angular's `HttpClient` and Rengular's HTTP support in your app config:
 
 ```ts
 import { bootstrapApplication } from '@angular/platform-browser';
@@ -48,7 +66,7 @@ bootstrapApplication(AppComponent, {
 });
 ```
 
-> Using NgModules? `RengHttpModule.forRoot('https://example.com/')` still works and
+> **NgModule app?** `RengHttpModule.forRoot('https://example.com/')` still works and
 > simply delegates to `provideRengHttp` under the hood.
 
 ## Imperative requests — `HttpService`
@@ -63,31 +81,35 @@ export class UsersComponent {
 
   load() {
     // GET https://example.com/api/users
-    this.http.Get('api/users').subscribe((users) => console.log(users));
+    this.http.Get<User[]>('api/users').subscribe((users) => console.log(users));
   }
 
   create() {
     // POST https://example.com/api/users
-    this.http.Post('api/users', { name: 'Ada' }).subscribe();
+    this.http.Post<User>('api/users', { name: 'Ada' }).subscribe();
   }
 
-  rename() {
+  rename(id: number) {
     // PATCH https://example.com/api/users/1
-    this.http.Patch('api/users/1', { name: 'Ada L.' }).subscribe();
+    this.http.Patch<User>(`api/users/${id}`, { name: 'Ada L.' }).subscribe();
   }
 }
 ```
 
-Each method (`Get`, `Post`, `Put`, `Delete`, `Patch`) takes an `endPoint` relative to
-the server location, and an optional final `api` argument — an absolute URL that
-bypasses the base, for one-off calls to a different backend.
+Every method takes an `endPoint` relative to the server location, optional request
+`options` (headers, params, etc.), and an optional final `api` argument — an absolute
+URL that **bypasses the base URL** for a one-off call to a different backend:
+
+```ts
+this.http.Get<Rates>('latest', { headers }, 'https://api.exchange.com/v2/latest');
+```
 
 ## Reactive requests — `rengHttpResource`
 
 `rengHttpResource` mirrors Angular's `httpResource` but prepends the configured server
-location. It returns an `HttpResourceRef` whose `value()`, `status()`, `error()` and
-`isLoading()` are signals, and which **re-fetches automatically** when a signal it
-reads changes.
+location. It returns an `HttpResourceRef` whose `value()`, `status()`, `error()`, and
+`isLoading()` are signals, and which **re-fetches automatically** whenever a signal it
+reads changes (cancelling any in-flight request first).
 
 ```ts
 import { Component, signal } from '@angular/core';
@@ -99,10 +121,16 @@ interface User { id: number; name: string; }
   selector: 'app-users',
   template: `
     @if (users.isLoading()) { <p>Loading…</p> }
-    @for (user of users.value() ?? []; track user.id) {
-      <li>{{ user.name }}</li>
-    }
+    @if (users.error()) { <p class="error">Could not load users.</p> }
+
+    <ul>
+      @for (user of users.value() ?? []; track user.id) {
+        <li>{{ user.name }}</li>
+      }
+    </ul>
+
     <button (click)="page.set(page() + 1)">Next page</button>
+    <button (click)="users.reload()">Reload</button>
   `,
 })
 export class UsersComponent {
@@ -115,26 +143,37 @@ export class UsersComponent {
 }
 ```
 
-`rengHttpResource` must be called in an injection context (e.g. a field initializer).
-If you already hold an `HttpService`, `http.resource(...)` does the same thing and can
-be called anywhere, since it reuses the service's own injector. Absolute endpoints
-(`https://…`) bypass the base URL; an empty/`undefined` endpoint keeps the resource idle.
+Notes:
 
-## Reading the server location
+- `rengHttpResource` must run in an **injection context** (e.g. a field initializer).
+  If you already hold an `HttpService`, `http.resource(...)` does the same thing and can
+  be called anywhere, since it reuses the service's own injector.
+- **Absolute** endpoints (`https://…`) bypass the base URL.
+- An **empty/`undefined`** endpoint keeps the resource idle (no request) — handy for
+  "don't fetch until a value is selected".
 
-```ts
-import { inject } from '@angular/core';
-import { SERVER_LOCATION } from '@rengular/http';
+## API reference
 
-const serverLocation = inject(SERVER_LOCATION);
-```
+| Export | Kind | Description |
+| ------ | ---- | ----------- |
+| `provideRengHttp(url)` | provider fn | Registers the server location and `HttpService`. Returns `EnvironmentProviders`. |
+| `HttpService` | injectable | Extends `HttpClient`. `Get/Post/Put/Delete/Patch(endPoint, …, options?, api?)` + `resource(endPoint, options?)`. |
+| `rengHttpResource<T>(endpoint, options?)` | function | Base-URL-aware `httpResource`. Returns `HttpResourceRef<T \| undefined>`. |
+| `SERVER_LOCATION` | `InjectionToken<string>` | The configured base URL; `inject(SERVER_LOCATION)` to read it. |
+| `RengEndpoint` | type | `string \| (() => string \| undefined)` — an endpoint relative to the base URL. |
+| `IRequestOptions` | interface | Options accepted by the imperative methods (headers, params, …). |
+| `RengHttpModule` | NgModule | Backward-compatible `forRoot(url)` wrapper over `provideRengHttp`. |
 
 ## Migrating from v1 (Angular 13)
 
 - The package now supports Angular `19.2`–`22`; its version is aligned with the
   Angular major (`22.x`).
-- `RengHttpModule.forRoot(url)` and `HttpService` keep the same API — no code change
+- `RengHttpModule.forRoot(url)` and `HttpService` keep the same API — no code change is
   required beyond upgrading Angular.
 - New code should prefer `provideRengHttp(url)` and `rengHttpResource()`.
 - `HttpClientModule` is no longer imported by the library; provide `provideHttpClient()`
   in your app (as shown above).
+
+## License
+
+[MIT](../../LICENSE)
