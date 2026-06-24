@@ -1,31 +1,51 @@
-import { TestBed, async } from '@angular/core/testing';
-import { AppComponent } from './app.component';
+import { TestBed } from "@angular/core/testing";
+import { provideHttpClient } from "@angular/common/http";
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from "@angular/common/http/testing";
+import { provideRengHttp } from "@rengular/http";
 
-describe('AppComponent', () => {
-  beforeEach(async(() => {
+import { AppComponent } from "./app.component";
+
+describe("AppComponent", () => {
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        AppComponent
+      imports: [AppComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRengHttp("http://api.test/"),
       ],
-    }).compileComponents();
-  }));
-
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app).toBeTruthy();
+    });
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it(`should have as title 'playground'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('playground');
-  });
+  afterEach(() => httpMock.verify());
 
-  it('should render title in a h1 tag', () => {
+  it("creates the app", () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.debugElement.nativeElement;
-    expect(compiled.querySelector('h1').textContent).toContain('Welcome to playground!');
+
+    httpMock.expectOne("http://api.test/posts?_limit=5").flush([]);
+    expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it("renders posts loaded through the resource", async () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne("http://api.test/posts?_limit=5")
+      .flush([{ id: 1, title: "hello rengular" }]);
+
+    // The resource resolves its value on a microtask; wait for it before render.
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const text: string = fixture.nativeElement.textContent;
+    expect(text).toContain("hello rengular");
   });
 });

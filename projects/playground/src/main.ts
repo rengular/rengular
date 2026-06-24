@@ -1,12 +1,14 @@
-import { enableProdMode } from '@angular/core';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { provideZonelessChangeDetection } from "@angular/core";
+import { provideHttpClient } from "@angular/common/http";
+import { bootstrapApplication } from "@angular/platform-browser";
+import { provideRengHttp } from "@rengular/http";
 
-import { AppModule } from './app/app.module';
-import { environment } from './environments/environment';
+import { AppComponent } from "./app/app.component";
 
-if (environment.production) {
-  enableProdMode();
-}
-
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => console.error(err));
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideZonelessChangeDetection(),
+    provideHttpClient(),
+    provideRengHttp("https://jsonplaceholder.typicode.com/"),
+  ],
+}).catch((err) => console.error(err));
