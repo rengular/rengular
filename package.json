@@ -2,6 +2,9 @@
   "name": "rengular",
   "description": "Reusable angular modules",
   "license": "MIT",
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  },
   "scripts": {
     "ng": "ng",
     "start": "npm run start:playground",

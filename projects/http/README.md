@@ -1,73 +1,135 @@
 # Angular HTTP library
-An Angular HTTP library that extends the `HttpClient`.
+
+An Angular **22** HTTP library that extends `HttpClient` with a configured default
+server location, convenience request methods, and a base-URL-aware wrapper around
+the signal-based [`httpResource`](https://angular.dev/guide/http/http-resource).
 
 ## What the library provides
 
-* Requests that are executed against provided default server location
-* Default server location injector token
+- Requests executed against a provided **default server location** (base URL).
+- `HttpService.Get/Post/Put/Delete/Patch` convenience methods (prepend the base URL,
+  accept an absolute `api` override).
+- `rengHttpResource()` / `HttpService.resource()` — reactive, signal-based HTTP via
+  Angular's `httpResource`, with the base URL applied automatically.
+- The `SERVER_LOCATION` injection token.
+- Fully standalone- and **zoneless**-ready.
 
-** Because the library is built on top of `HttpClient` - all `HttpClient` functionality can be used as well.
+Because the library is built on top of `HttpClient`, all `HttpClient` functionality
+(interceptors, testing, etc.) is available as well.
 
-## Future features
+## Requirements
 
-* DELETE request with a confirmation to execute the request
+- Angular `^22.0.0` (`@angular/core`, `@angular/common`).
 
 ## How to install
 
-```npm i @rengular/http --save```
+```bash
+npm i @rengular/http --save
+```
 
-## How to use
+## Setup (standalone)
 
-  https://stackblitz.com/edit/rengular-http-usage
+Provide Angular's `HttpClient` and Rengular's HTTP support in your application config:
 
-  OR
+```ts
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideHttpClient } from '@angular/common/http';
+import { provideRengHttp } from '@rengular/http';
 
-  1. Import the Rengular http module into the root module file of your application.
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideHttpClient(),
+    provideRengHttp('https://example.com/'), // your default server location
+  ],
+});
+```
 
-          import { RengHttpModule } from '@rengular/http';
+> Using NgModules? `RengHttpModule.forRoot('https://example.com/')` still works and
+> simply delegates to `provideRengHttp` under the hood.
 
- 2. Provide the module into the `NgModule` imports array.
+## Imperative requests — `HttpService`
 
-        RengHttpModule.forRoot('http://example.com/'),
-        
-      * Make sure to change the string URL in the `forRoot`
+```ts
+import { Component, inject } from '@angular/core';
+import { HttpService } from '@rengular/http';
 
- 3. Import Rengular Http service where you want to do a call 
+@Component({ /* … */ })
+export class UsersComponent {
+  private readonly http = inject(HttpService);
 
-        import { HttpService } from '@rengular/http';
+  load() {
+    // GET https://example.com/api/users
+    this.http.Get('api/users').subscribe((users) => console.log(users));
+  }
 
-   Example:
+  create() {
+    // POST https://example.com/api/users
+    this.http.Post('api/users', { name: 'Ada' }).subscribe();
+  }
 
-        import { Component } from '@angular/core';
-        import { HttpService } from '@rengular/http';
-        
-        export class AppComponent {
-        
-          constructor( private http: HttpService ) {
-          }
-        
-          ngOnInit() {
-            this.http.Post('api/auth/login', null).subscribe((token) => {
-              console.log('The authentication is OK!', token);
-            }, () => {
-              console.log('The authentication failed!');
-            });
-          }
-        
-        }
+  rename() {
+    // PATCH https://example.com/api/users/1
+    this.http.Patch('api/users/1', { name: 'Ada L.' }).subscribe();
+  }
+}
+```
 
-  *  If you want to get the server location provided in the beginning
-  
-   Import:
-   
-   ``` import { SERVER_LOCATION } from '@rengular/http';```
-  
-   and define in your component/service/directive constructor:
-  
-    @Inject(SERVER_LOCATION) SERVER_LOCATION: string;
+Each method (`Get`, `Post`, `Put`, `Delete`, `Patch`) takes an `endPoint` relative to
+the server location, and an optional final `api` argument — an absolute URL that
+bypasses the base, for one-off calls to a different backend.
 
-### Documentation
+## Reactive requests — `rengHttpResource`
 
-TBD
+`rengHttpResource` mirrors Angular's `httpResource` but prepends the configured server
+location. It returns an `HttpResourceRef` whose `value()`, `status()`, `error()` and
+`isLoading()` are signals, and which **re-fetches automatically** when a signal it
+reads changes.
 
-If you use WebStorm or VS Code I am pretty sure the editor will show you documentation about what methods the `HttpService` has and what each of the parameters on the used method represents on the fly.
+```ts
+import { Component, signal } from '@angular/core';
+import { rengHttpResource } from '@rengular/http';
+
+interface User { id: number; name: string; }
+
+@Component({
+  selector: 'app-users',
+  template: `
+    @if (users.isLoading()) { <p>Loading…</p> }
+    @for (user of users.value() ?? []; track user.id) {
+      <li>{{ user.name }}</li>
+    }
+    <button (click)="page.set(page() + 1)">Next page</button>
+  `,
+})
+export class UsersComponent {
+  protected readonly page = signal(1);
+
+  // Re-issues GET https://example.com/api/users?page=N whenever `page` changes.
+  protected readonly users = rengHttpResource<User[]>(
+    () => `api/users?page=${this.page()}`
+  );
+}
+```
+
+`rengHttpResource` must be called in an injection context (e.g. a field initializer).
+If you already hold an `HttpService`, `http.resource(...)` does the same thing and can
+be called anywhere, since it reuses the service's own injector. Absolute endpoints
+(`https://…`) bypass the base URL; an empty/`undefined` endpoint keeps the resource idle.
+
+## Reading the server location
+
+```ts
+import { inject } from '@angular/core';
+import { SERVER_LOCATION } from '@rengular/http';
+
+const serverLocation = inject(SERVER_LOCATION);
+```
+
+## Migrating from v1 (Angular 13)
+
+- The package now targets Angular 22 and is published as **v2**.
+- `RengHttpModule.forRoot(url)` and `HttpService` keep the same API — no code change
+  required beyond upgrading Angular.
+- New code should prefer `provideRengHttp(url)` and `rengHttpResource()`.
+- `HttpClientModule` is no longer imported by the library; provide `provideHttpClient()`
+  in your app (as shown above).
