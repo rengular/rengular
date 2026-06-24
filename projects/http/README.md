@@ -1,8 +1,9 @@
 # Angular HTTP library
 
-An Angular **22** HTTP library that extends `HttpClient` with a configured default
+An Angular HTTP library that extends `HttpClient` with a configured default
 server location, convenience request methods, and a base-URL-aware wrapper around
 the signal-based [`httpResource`](https://angular.dev/guide/http/http-resource).
+Supports **Angular 19.2 → 22**.
 
 ## What the library provides
 
@@ -19,7 +20,10 @@ Because the library is built on top of `HttpClient`, all `HttpClient` functional
 
 ## Requirements
 
-- Angular `^22.0.0` (`@angular/core`, `@angular/common`).
+- Angular `19.2`, `20`, `21`, or `22` (`@angular/core`, `@angular/common`).
+- `httpResource` (and the `rengHttpResource` / `HttpService.resource` APIs) requires
+  Angular **≥ 19.2**, where it shipped experimentally; it is stable from Angular 22.
+  The imperative `HttpService` methods work on the whole range.
 
 ## How to install
 
@@ -127,7 +131,8 @@ const serverLocation = inject(SERVER_LOCATION);
 
 ## Migrating from v1 (Angular 13)
 
-- The package now targets Angular 22 and is published as **v2**.
+- The package now supports Angular `19.2`–`22`; its version is aligned with the
+  Angular major (`22.x`).
 - `RengHttpModule.forRoot(url)` and `HttpService` keep the same API — no code change
   required beyond upgrading Angular.
 - New code should prefer `provideRengHttp(url)` and `rengHttpResource()`.

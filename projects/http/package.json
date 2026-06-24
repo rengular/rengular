@@ -16,7 +16,7 @@
     "zoneless"
   ],
   "peerDependencies": {
-    "@angular/common": "^22.0.0",
-    "@angular/core": "^22.0.0"
+    "@angular/common": "^19.2.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/core": "^19.2.0 || ^20.0.0 || ^21.0.0 || ^22.0.0"
   }
 }
